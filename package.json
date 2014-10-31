@@ -25,7 +25,9 @@
   "homepage": "https://github.com/GMTurbo/smasher",
   "dependencies": {
     "chunking-streams": "0.0.7-b1",
+    "lodash": "^2.4.1",
     "minimist": "^1.1.0",
-    "stream-bouncer": "0.0.5"
+    "stream-bouncer": "0.0.5",
+    "through": "^2.3.6"
   }
 }
