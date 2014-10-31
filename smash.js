@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var fs = require('fs'),
   path = require('path'),
   argv = require('minimist')(process.argv.slice(2)),
@@ -5,7 +7,7 @@ var fs = require('fs'),
   zlib;
 
 // if (argv.compress || argv.c) {
-//   var zlib = require('zlib');
+//   zlib = require('zlib');
 // }
 
 var _bouncer = new StreamBouncer({
