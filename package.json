@@ -1,0 +1,31 @@
+{
+  "name": "smasher",
+  "version": "1.0.0",
+  "description": "smash a file into pieces and put it back together",
+  "main": "smash.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GMTurbo/smasher.git"
+  },
+  "keywords": [
+    "file",
+    "splitter",
+    "file",
+    "joiner",
+    "chunker"
+  ],
+  "author": "Gabe Testa <gabe.testa@gmail.com> (http://gmturboism.com/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/GMTurbo/smasher/issues"
+  },
+  "homepage": "https://github.com/GMTurbo/smasher",
+  "dependencies": {
+    "chunking-streams": "0.0.7-b1",
+    "minimist": "^1.1.0",
+    "stream-bouncer": "0.0.5"
+  }
+}
