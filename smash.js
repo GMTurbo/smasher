@@ -9,7 +9,7 @@ var _break = function(fileName, count) {
   var chunkingStreams = require('chunking-streams'),
     SizeChunker = chunkingStreams.SizeChunker,
     size = fs.statSync(fileName).size,
-    counter = 0,
+    counter = 1,
     output,
     source = fs.createReadStream(fileName);
 
