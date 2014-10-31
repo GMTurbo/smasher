@@ -4,6 +4,10 @@ var fs = require('fs'),
   _ = require('lodash'),
   StreamBouncer = require('stream-bouncer');
 
+if (argv.compress || argv.c) {
+  var zlib = require('zlib');
+}
+
 var _bouncer = new StreamBouncer({
   streamsPerTick: 1,
   poll: 100
@@ -13,13 +17,10 @@ var _break = function(fileName, count) {
 
   var chunkingStreams = require('chunking-streams'),
     SizeChunker = chunkingStreams.SizeChunker,
-    size = fs.statSync(fileName).size,
-    counter = 1,
-    output,
-    source = fs.createReadStream(fileName);
+    output;
 
   var chunker = new SizeChunker({
-    chunkSize: size / count,
+    chunkSize: fs.statSync(fileName).size / count,
     flushTail: true
   });
 
@@ -30,10 +31,9 @@ var _break = function(fileName, count) {
 
   chunker.on('chunkEnd', function(id, done) {
     output.end();
-    if(fs.statSync(output.path).size == 0){
-      debugger;
-      fs.unlink(output.path, function(err){
-        if(err)
+    if (fs.statSync(output.path).size == 0) {
+      fs.unlink(output.path, function(err) {
+        if (err)
           console.log(err);
       });
     }
@@ -41,12 +41,14 @@ var _break = function(fileName, count) {
   });
 
   chunker.on('data', function(chunk) {
-    if(chunk.data.length)
+    if (chunk.data.length) {
       output.write(chunk.data);
+    }
   });
 
   _bouncer.push({
-    source: source,
+    source: fs.createReadStream(fileName),
+    middle: zlib !== undefined ? zlib.createGzip() : undefined,
     destination: chunker
   });
 
@@ -54,8 +56,7 @@ var _break = function(fileName, count) {
 
 var _join = function(basename) {
 
-  randomAccessFile = require('random-access-file'),
-
+  var randomAccessFile = require('random-access-file'),
     through = require('through'),
     _ = require('lodash'),
     file = randomAccessFile('my-file.txt'),
@@ -69,8 +70,6 @@ var _join = function(basename) {
 
       if (memo)
         return memo;
-
-      //debugger;
 
       var files = fs.readdirSync(path.dirname(basename));
 
@@ -87,28 +86,58 @@ var _join = function(basename) {
     return getCount;
   }
 
-  var _onChunk = function(globalOffset, filename) {
+  // var _onZippedChunk = function(filename) {
+  //
+  //   var globalOffset = 0;
+  //
+  //   return function() {
+  //
+  //     return function(data) {
+  //
+  //       var file = randomAccessFile(basename);
+  //
+  //       file.write(globalOffset, data, function(err) {
+  //
+  //         if (err)
+  //           console.error(err);
+  //         file.close();
+  //
+  //       });
+  //
+  //       globalOffset += data.length;
+  //     }
+  //   };
+  //
+  // };
 
-    var size = fs.statSync(filename).size,
-      offset = 0;
-
-    return function(data) {
-
-      var file = randomAccessFile(basename);
-
-      file.write(globalOffset + offset, data, function(err) {
-        // write a buffer to offset 10
-        if (err)
-          console.error(err);
-        file.close();
-      });
-
-      offset += data.length;
-
-    };
-  }
+  // var _onChunk = function(globalOffset, filename) {
+  //
+  //   var offset = 0;
+  //
+  //   return function(data) {
+  //
+  //     var file = randomAccessFile(basename);
+  //
+  //     file.write(globalOffset + offset, data, function(err) {
+  //       // write a buffer to offset 10
+  //       if (err)
+  //         console.error(err);
+  //       file.close();
+  //     });
+  //
+  //     offset += data.length;
+  //   };
+  // }
 
   var getCount = _getFileCount(basename);
+
+  //var unzipper = _onZippedChunk();
+
+  if(fs.existsSync(basename)){
+    console.log(path.basename(basename) + ' already exists on disk : (');
+    return;
+  }
+
   for (var i = 0; i < getCount(); i++) {
 
     var name = basename + '.' + i;
@@ -118,12 +147,21 @@ var _join = function(basename) {
       continue;
     }
 
-    _bouncer.push({
-      source: fs.createReadStream(name),
-      destination: new through(_onChunk(offset, name))
-    });
+    if (!zlib) {
 
-    offset += fs.statSync(name).size;
+      _bouncer.push({
+        source: fs.createReadStream(name),
+        destination: fs.createWriteStream(basename, {'flags':'a'})//new through(_onChunk(offset, name))
+      });
+
+    } else {
+      _bouncer.push({
+        source: fs.createReadStream(name),
+        middle: zlib.createGunzip(),
+        destination: fs.createWriteStream(basename, {'flags':'a'})
+      });
+    }
+
   }
 
 };

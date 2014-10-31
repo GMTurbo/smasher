@@ -28,7 +28,7 @@
     "lodash": "^2.4.1",
     "minimist": "^1.1.0",
     "random-access-file": "^0.3.1",
-    "stream-bouncer": "0.0.5",
+    "stream-bouncer": "^1.0.2",
     "through": "^2.3.6"
   }
 }
