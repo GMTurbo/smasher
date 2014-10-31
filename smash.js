@@ -1,7 +1,6 @@
 var fs = require('fs'),
   path = require('path'),
   argv = require('minimist')(process.argv.slice(2)),
-  _ = require('lodash'),
   StreamBouncer = require('stream-bouncer');
 
 if (argv.compress || argv.c) {
