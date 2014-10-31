@@ -57,9 +57,8 @@ var _break = function(fileName, count) {
 var _join = function(basename) {
 
   var randomAccessFile = require('random-access-file'),
-    through = require('through'),
+    //through = require('through'),
     _ = require('lodash'),
-    file = randomAccessFile('my-file.txt'),
     offset = 0;
 
   var _getFileCount = function(basename) {
