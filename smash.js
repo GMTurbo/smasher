@@ -1,11 +1,12 @@
 var fs = require('fs'),
   path = require('path'),
   argv = require('minimist')(process.argv.slice(2)),
-  StreamBouncer = require('stream-bouncer');
+  StreamBouncer = require('stream-bouncer'),
+  zlib;
 
-if (argv.compress || argv.c) {
-  var zlib = require('zlib');
-}
+// if (argv.compress || argv.c) {
+//   var zlib = require('zlib');
+// }
 
 var _bouncer = new StreamBouncer({
   streamsPerTick: 1,
@@ -24,7 +25,7 @@ var _break = function(fileName, count) {
   });
 
   chunker.on('chunkStart', function(id, done) {
-    output = fs.createWriteStream(fileName + "." + id);
+    output = fs.createWriteStream(fileName + "." + id + (zlib !== undefined ? ".zip" : ""));
     done();
   });
 
@@ -138,7 +139,7 @@ var _join = function(basename) {
 
   for (var i = 0; i < getCount(); i++) {
 
-    var name = basename + '.' + i;
+    var name = basename + '.' + i + (zlib !== undefined ? ".zip" : "");
 
     if (!fs.existsSync(name)) {
       console.log(name + ' missing :/');
