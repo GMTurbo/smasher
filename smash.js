@@ -10,6 +10,7 @@ var _break = function(fileName, count) {
     SizeChunker = chunkingStreams.SizeChunker,
     size = fs.statSync(fileName).size,
     counter = 0,
+    output,
     source = fs.createReadStream(fileName);
 
   var _bouncer = new StreamBouncer({
@@ -18,34 +19,30 @@ var _break = function(fileName, count) {
   });
 
   var chunker = new SizeChunker({
-    chunkSize: size / count
+    chunkSize: (size / count) - 0,
+    flushTail: true
   });
 
-  var _savetoDisk = function(filename, buffer, fileSuffix) {
-    //  debugger;
-    var memo = {};
+  chunker.on('chunkStart', function(id, done) {
+    output = fs.createWriteStream(fileName + "." + id);
+    done();
+  });
 
-    return (function() {
-      var name = filename + "." + fileSuffix;
-      // if (!memo[name]) {
-      //   memo[name] = name;
-        fs.writeFile(name, buffer, function(err) {
-          if (err) {
-            console.log(err);
-          } else {
-            console.log(path.basename(name) + " saved.");
-          }
-        })
-      // } else {
-      //   fs.appendFile(name, buffer, function(err) {
-      //
-      //   });
-      // }
-    })()
-  };
+  chunker.on('chunkEnd', function(id, done) {
+    output.end();
+    if(fs.statSync(output.path).size == 0){
+      debugger;
+      fs.unlink(output.path, function(err){
+        if(err)
+          console.log(err);
+      });
+    }
+    done();
+  });
 
   chunker.on('data', function(chunk) {
-    _savetoDisk(fileName, chunk.data, counter++);
+    if(chunk.data.length)
+      output.write(chunk.data);
   });
 
   _bouncer.push({
