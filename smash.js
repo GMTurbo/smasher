@@ -4,6 +4,11 @@ var fs = require('fs'),
   _ = require('lodash'),
   StreamBouncer = require('stream-bouncer');
 
+var _bouncer = new StreamBouncer({
+  streamsPerTick: 1,
+  poll: 100
+});
+
 var _break = function(fileName, count) {
 
   var chunkingStreams = require('chunking-streams'),
@@ -13,13 +18,8 @@ var _break = function(fileName, count) {
     output,
     source = fs.createReadStream(fileName);
 
-  var _bouncer = new StreamBouncer({
-    streamsPerTick: 1,
-    poll: 100
-  });
-
   var chunker = new SizeChunker({
-    chunkSize: (size / count) - 0,
+    chunkSize: size / count,
     flushTail: true
   });
 
@@ -55,6 +55,7 @@ var _break = function(fileName, count) {
 var _join = function(basename) {
 
   randomAccessFile = require('random-access-file'),
+
     through = require('through'),
     _ = require('lodash'),
     file = randomAccessFile('my-file.txt'),
@@ -69,19 +70,21 @@ var _join = function(basename) {
       if (memo)
         return memo;
 
-      debugger;
+      //debugger;
 
       var files = fs.readdirSync(path.dirname(basename));
 
       files = _.filter(files, function(file) {
-        return basename.indexOf(path.basename(file)) != -1;
+        return file.indexOf(path.basename(basename) + '.') != -1;
       });
 
       memo = files.length || 0;
 
+      return memo;
+
     };
 
-    return getCount();
+    return getCount;
   }
 
   var _onChunk = function(globalOffset, filename) {
@@ -97,7 +100,7 @@ var _join = function(basename) {
         // write a buffer to offset 10
         if (err)
           console.error(err);
-
+        file.close();
       });
 
       offset += data.length;
@@ -105,7 +108,8 @@ var _join = function(basename) {
     };
   }
 
-  for (var i = 0; i < _getFileCount(path.dirname(basename)); i++) {
+  var getCount = _getFileCount(basename);
+  for (var i = 0; i < getCount(); i++) {
 
     var name = basename + '.' + i;
 
@@ -114,14 +118,12 @@ var _join = function(basename) {
       continue;
     }
 
-    var tr = new through(_onChunk(offset, name));
-
     _bouncer.push({
       source: fs.createReadStream(name),
-      destination: chunker
+      destination: new through(_onChunk(offset, name))
     });
 
-    offset += fs.statSync(filename).size;
+    offset += fs.statSync(name).size;
   }
 
 };
