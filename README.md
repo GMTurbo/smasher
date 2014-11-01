@@ -8,7 +8,7 @@ Smash a file into chunks and put it back together!
 ```
 ## Why?
 
-Ever used a Fat32 storage device?  Ever needed to put something on it larger than 4 gb's? Now you can! Just smash the file into pieces, transfer them to the drive, then reassemble them.
+Ever used a Fat32 storage device?  Ever needed to put something on it larger than 4 gb's? Now you can! Just smash the file into pieces, transfer them to the drive, boom, you're done.
 
 ## It is easy to use
 
