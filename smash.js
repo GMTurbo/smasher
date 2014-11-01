@@ -4,6 +4,7 @@ var fs = require('fs'),
   path = require('path'),
   argv = require('minimist')(process.argv.slice(2)),
   StreamBouncer = require('stream-bouncer'),
+  mkdirp = require('mkdirp'),
   zlib;
 
 // if (argv.compress || argv.c) {
@@ -17,6 +18,17 @@ var _bouncer = new StreamBouncer({
 
 var _break = function(fileName, count) {
 
+  var _getOutputPath = function(){
+
+      if(argv.output){
+        return argv.output;
+      }
+
+      mkdirp.sync(path.dirname(fileName) + '/output/');
+
+      return path.dirname(fileName) + '/output/';
+  };
+
   var chunkingStreams = require('chunking-streams'),
     SizeChunker = chunkingStreams.SizeChunker,
     output;
@@ -27,7 +39,7 @@ var _break = function(fileName, count) {
   });
 
   chunker.on('chunkStart', function(id, done) {
-    output = fs.createWriteStream(fileName + "." + id + (zlib !== undefined ? ".zip" : ""));
+    output = fs.createWriteStream( _getOutputPath() + path.basename(fileName) + "." + id + (zlib !== undefined ? ".zip" : ""));
     done();
   });
 

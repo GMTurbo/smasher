@@ -1,6 +1,6 @@
 {
   "name": "file-smasher",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "smash a file into pieces and put it back together",
   "main": "smash.js",
   "scripts": {
@@ -30,6 +30,7 @@
     "chunking-streams": "0.0.7-b1",
     "lodash": "^2.4.1",
     "minimist": "^1.1.0",
+    "mkdirp": "^0.5.0",
     "random-access-file": "^0.3.1",
     "stream-bouncer": "^1.0.2"
   }
