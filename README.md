@@ -23,7 +23,7 @@ smash --join file.iso
 --output is optional.  defaults to /output/ in working directory
 
 ##Join Tips
-Joining assumes the files are named in the following format (which they are when you smash):
+Joining assumes the files are named in the following format (which they are when using the '--break' command):
 
 ```
 file.iso.0
