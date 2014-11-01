@@ -20,16 +20,16 @@ var createPath = function(dir, file) {
   return directory + '/' + path.basename(file);
 };
 
-var _checkForOut = function() {
+var _checkForOut = function(targetRoot) {
   if (argv.output) {
     return argv.output + '/';
   }
-  return '/';
+  return path.dirname(targetRoot);
 };
 
 var _getOutputPath = function(fileName) {
 
-  var ret = _checkForOut();
+  var ret = _checkForOut(fileName);
   if (ret != '/') {
     return ret;
   }
@@ -50,7 +50,8 @@ var _break = function(fileName, count) {
     });
 
   chunker.on('chunkStart', function(id, done) {
-    output = fs.createWriteStream(_getOutputPath(fileName) + path.basename(fileName) + "." + id);
+    mkdirp.sync(_getOutputPath(fileName));
+    output = fs.createWriteStream(_getOutputPath(fileName) + '/'+ path.basename(fileName) + "." + id);
     done();
   });
 
@@ -81,15 +82,14 @@ var _break = function(fileName, count) {
 var _join = function(targetRoot) {
 
   var randomAccessFile = require('random-access-file'),
-    _ = require('lodash'),
-    offset = 0;
+    _ = require('lodash');
 
   var _getFileCount = function(targetRoot) {
 
     var memo;
 
     var getCount = function() {
-      debugger;
+
       if (memo)
         return memo;
 
@@ -107,9 +107,9 @@ var _join = function(targetRoot) {
 
     return getCount;
   }
-  debugger;
+
   var getCount = _getFileCount(targetRoot),
-    outputFile = createPath(_checkForOut(), targetRoot);
+    outputFile = createPath(_checkForOut(targetRoot), targetRoot);
 
   if (fs.existsSync(outputFile)) {
     console.log(outputFile + ' already exists on disk : (');
