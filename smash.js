@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-
+//github.com/GMTurbo/smasher/blob/master/smash.js
 var fs = require('fs'),
   path = require('path'),
   argv = require('minimist')(process.argv.slice(2)),
@@ -12,18 +12,34 @@ var _bouncer = new StreamBouncer({
   poll: 100
 });
 
+var createPath = function(dir, file) {
+  //if(!fs.existsSync(dir))
+
+  var directory = fs.statSync(dir).isDirectory ? dir : path.dirname(file);
+  mkdirp.sync(directory);
+  return directory + '/' + path.basename(file);
+};
+
+var _checkForOut = function() {
+  if (argv.output) {
+    return argv.output + '/';
+  }
+  return '/';
+};
+
+var _getOutputPath = function(fileName) {
+
+  var ret = _checkForOut();
+  if (ret != '/') {
+    return ret;
+  }
+
+  mkdirp.sync(path.dirname(fileName) + '/output/');
+
+  return path.dirname(fileName) + '/output/';
+};
+
 var _break = function(fileName, count) {
-
-  var _getOutputPath = function() {
-
-    if (argv.output) {
-      return argv.output + '/';
-    }
-
-    mkdirp.sync(path.dirname(fileName) + '/output/');
-
-    return path.dirname(fileName) + '/output/';
-  };
 
   var chunkingStreams = require('chunking-streams'),
     SizeChunker = chunkingStreams.SizeChunker,
@@ -34,7 +50,7 @@ var _break = function(fileName, count) {
     });
 
   chunker.on('chunkStart', function(id, done) {
-    output = fs.createWriteStream(_getOutputPath() + path.basename(fileName) + "." + id);
+    output = fs.createWriteStream(_getOutputPath(fileName) + path.basename(fileName) + "." + id);
     done();
   });
 
@@ -62,25 +78,25 @@ var _break = function(fileName, count) {
 
 };
 
-var _join = function(basename) {
+var _join = function(targetRoot) {
 
   var randomAccessFile = require('random-access-file'),
     _ = require('lodash'),
     offset = 0;
 
-  var _getFileCount = function(basename) {
+  var _getFileCount = function(targetRoot) {
 
     var memo;
 
     var getCount = function() {
-
+      debugger;
       if (memo)
         return memo;
 
-      var files = fs.readdirSync(path.dirname(basename));
+      var files = fs.readdirSync(path.dirname(targetRoot));
 
       files = _.filter(files, function(file) {
-        return file.indexOf(path.basename(basename) + '.') != -1;
+        return file.indexOf(path.basename(targetRoot) + '.') != -1;
       });
 
       memo = files.length || 0;
@@ -91,17 +107,18 @@ var _join = function(basename) {
 
     return getCount;
   }
+  debugger;
+  var getCount = _getFileCount(targetRoot),
+    outputFile = createPath(_checkForOut(), targetRoot);
 
-  var getCount = _getFileCount(basename);
-
-  if (fs.existsSync(basename)) {
-    console.log(path.basename(basename) + ' already exists on disk : (');
+  if (fs.existsSync(outputFile)) {
+    console.log(outputFile + ' already exists on disk : (');
     return;
   }
 
   for (var i = 0; i < getCount(); i++) {
 
-    var name = basename + '.' + i;
+    var name = targetRoot + '.' + i;
 
     if (!fs.existsSync(name)) {
       console.log(name + ' missing :/');
@@ -110,7 +127,7 @@ var _join = function(basename) {
 
     _bouncer.push({
       source: fs.createReadStream(name),
-      destination: fs.createWriteStream(basename, {
+      destination: fs.createWriteStream(outputFile, {
         'flags': 'a'
       })
     });

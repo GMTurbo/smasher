@@ -2,12 +2,12 @@
   "name": "file-smasher",
   "version": "1.0.2",
   "description": "smash a file into pieces and put it back together",
-  "main": "smash.js",
+  "main": "smash.min.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "smash": "smash.js"
+    "smash": "smash.min.js"
   },
   "repository": {
     "type": "git",
