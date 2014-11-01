@@ -14,11 +14,14 @@ Ever used a Fat32 storage device?  Ever needed to put something on it larger tha
 
 ``` bash
 //smash a file into pieces
-smash --break file.iso --count 10
+smash --break file.iso --count 10 --output tmpDir
 
 //join the file back together
 smash --join file.iso
 ```
+##Break Tips
+--output is optional.  defaults to /output/ in working directory
+
 ##Join Tips
 Joining assumes the files are named in the following format (which they are when you smash):
 

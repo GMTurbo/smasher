@@ -21,7 +21,7 @@ var _break = function(fileName, count) {
   var _getOutputPath = function(){
 
       if(argv.output){
-        return argv.output;
+        return argv.output + '/';
       }
 
       mkdirp.sync(path.dirname(fileName) + '/output/');
