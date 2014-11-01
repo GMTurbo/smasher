@@ -5,11 +5,7 @@ var fs = require('fs'),
   argv = require('minimist')(process.argv.slice(2)),
   StreamBouncer = require('stream-bouncer'),
   mkdirp = require('mkdirp'),
-  zlib;
-
-// if (argv.compress || argv.c) {
-//   zlib = require('zlib');
-// }
+  colors = require('colors');
 
 var _bouncer = new StreamBouncer({
   streamsPerTick: 1,
@@ -18,28 +14,27 @@ var _bouncer = new StreamBouncer({
 
 var _break = function(fileName, count) {
 
-  var _getOutputPath = function(){
+  var _getOutputPath = function() {
 
-      if(argv.output){
-        return argv.output + '/';
-      }
+    if (argv.output) {
+      return argv.output + '/';
+    }
 
-      mkdirp.sync(path.dirname(fileName) + '/output/');
+    mkdirp.sync(path.dirname(fileName) + '/output/');
 
-      return path.dirname(fileName) + '/output/';
+    return path.dirname(fileName) + '/output/';
   };
 
   var chunkingStreams = require('chunking-streams'),
     SizeChunker = chunkingStreams.SizeChunker,
-    output;
-
-  var chunker = new SizeChunker({
-    chunkSize: fs.statSync(fileName).size / count,
-    flushTail: true
-  });
+    output,
+    chunker = new SizeChunker({
+      chunkSize: fs.statSync(fileName).size / count,
+      flushTail: true
+    });
 
   chunker.on('chunkStart', function(id, done) {
-    output = fs.createWriteStream( _getOutputPath() + path.basename(fileName) + "." + id + (zlib !== undefined ? ".zip" : ""));
+    output = fs.createWriteStream(_getOutputPath() + path.basename(fileName) + "." + id);
     done();
   });
 
@@ -62,7 +57,6 @@ var _break = function(fileName, count) {
 
   _bouncer.push({
     source: fs.createReadStream(fileName),
-    middle: zlib !== undefined ? zlib.createGzip() : undefined,
     destination: chunker
   });
 
@@ -71,7 +65,6 @@ var _break = function(fileName, count) {
 var _join = function(basename) {
 
   var randomAccessFile = require('random-access-file'),
-    //through = require('through'),
     _ = require('lodash'),
     offset = 0;
 
@@ -99,91 +92,56 @@ var _join = function(basename) {
     return getCount;
   }
 
-  // var _onZippedChunk = function(filename) {
-  //
-  //   var globalOffset = 0;
-  //
-  //   return function() {
-  //
-  //     return function(data) {
-  //
-  //       var file = randomAccessFile(basename);
-  //
-  //       file.write(globalOffset, data, function(err) {
-  //
-  //         if (err)
-  //           console.error(err);
-  //         file.close();
-  //
-  //       });
-  //
-  //       globalOffset += data.length;
-  //     }
-  //   };
-  //
-  // };
-
-  // var _onChunk = function(globalOffset, filename) {
-  //
-  //   var offset = 0;
-  //
-  //   return function(data) {
-  //
-  //     var file = randomAccessFile(basename);
-  //
-  //     file.write(globalOffset + offset, data, function(err) {
-  //       // write a buffer to offset 10
-  //       if (err)
-  //         console.error(err);
-  //       file.close();
-  //     });
-  //
-  //     offset += data.length;
-  //   };
-  // }
-
   var getCount = _getFileCount(basename);
 
-  //var unzipper = _onZippedChunk();
-
-  if(fs.existsSync(basename)){
+  if (fs.existsSync(basename)) {
     console.log(path.basename(basename) + ' already exists on disk : (');
     return;
   }
 
   for (var i = 0; i < getCount(); i++) {
 
-    var name = basename + '.' + i + (zlib !== undefined ? ".zip" : "");
+    var name = basename + '.' + i;
 
     if (!fs.existsSync(name)) {
       console.log(name + ' missing :/');
-      continue;
+      process.exit();
     }
 
-    if (!zlib) {
-
-      _bouncer.push({
-        source: fs.createReadStream(name),
-        destination: fs.createWriteStream(basename, {'flags':'a'})//new through(_onChunk(offset, name))
-      });
-
-    } else {
-      _bouncer.push({
-        source: fs.createReadStream(name),
-        middle: zlib.createGunzip(),
-        destination: fs.createWriteStream(basename, {'flags':'a'})
-      });
-    }
+    _bouncer.push({
+      source: fs.createReadStream(name),
+      destination: fs.createWriteStream(basename, {
+        'flags': 'a'
+      })
+    });
 
   }
 
 };
 
-argv.break = argv.break || argv.b;
-argv.join = argv.join || argv.j;
+argv.break = argv.break;
+argv.join = argv.join;
 
 if (argv.break) {
   _break(argv.break, argv.count || 2)
 } else if (argv.join) {
   _join(argv.join)
+} else {
+  printHelp();
+}
+
+function printHelp() {
+  var message = [
+    ['smash'.red,
+      ' --break'.green,
+      ' path/file.txt'.cyan,
+      ' --count'.green,
+      ' 5'.cyan
+    ].join(' '), ['smash'.red,
+      ' --join'.green,
+      ' path/file.txt'.cyan,
+      '<-- file name and extention must match chunks'.grey
+    ].join(' ')
+  ];
+  console.log(message.join('\n'));
 }
