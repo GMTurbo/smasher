@@ -13,8 +13,6 @@ var _bouncer = new StreamBouncer({
 });
 
 var createPath = function(dir, file) {
-  //if(!fs.existsSync(dir))
-
   var directory = fs.statSync(dir).isDirectory ? dir : path.dirname(file);
   mkdirp.sync(directory);
   return directory + '/' + path.basename(file);
@@ -122,7 +120,7 @@ var _join = function(targetRoot) {
 
     if (!fs.existsSync(name)) {
       console.log(name + ' missing :/');
-      process.exit();
+      continue
     }
 
     _bouncer.push({
