@@ -5,24 +5,47 @@ var fs = require('fs'),
   argv = require('minimist')(process.argv.slice(2)),
   StreamBouncer = require('stream-bouncer'),
   mkdirp = require('mkdirp'),
-  colors = require('colors');
+  colors = require('colors'),
+  _ = require('lodash');
 
 var _bouncer = new StreamBouncer({
   streamsPerTick: 1,
   poll: 100
 });
 
+var _getFileCount = function(filepath) {
+
+  var memo;
+
+  var getCount = function() {
+
+    if (memo)
+      return memo;
+
+    var files = fs.readdirSync(path.dirname(filepath));
+
+    files = _.filter(files, function(file) {
+      return file.indexOf(path.basename(filepath) + '.') != -1;
+    });
+
+    memo = files.length || 0;
+
+    return memo;
+
+  };
+
+  return getCount;
+}
+
 var createPath = function(dir, file) {
-  var directory = fs.statSync(dir).isDirectory ? dir : path.dirname(file);
-  mkdirp.sync(directory);
-  return directory + '/' + path.basename(file);
+  return dir + '/' + path.basename(file);
 };
 
 var _checkForOut = function(targetRoot) {
   if (argv.output) {
     return argv.output + '/';
   }
-  return path.dirname(targetRoot);
+  return '/';
 };
 
 var _getOutputPath = function(fileName) {
@@ -55,12 +78,6 @@ var _break = function(fileName, count) {
 
   chunker.on('chunkEnd', function(id, done) {
     output.end();
-    if (fs.statSync(output.path).size == 0) {
-      fs.unlink(output.path, function(err) {
-        if (err)
-          console.log(err);
-      });
-    }
     done();
   });
 
@@ -68,6 +85,30 @@ var _break = function(fileName, count) {
     if (chunk.data.length) {
       output.write(chunk.data);
     }
+  });
+
+  _bouncer.on('close', function(str){
+
+    var bname = _getOutputPath(fileName) + '/'+ path.basename(fileName);
+    var getCount = _getFileCount(bname);
+
+    for (var i = 0; i < getCount(); i++) {
+
+      var name = bname + "." + i;
+
+      if (!fs.existsSync(name)) {
+        console.log(name + ' missing :/');
+        continue;
+      }
+
+      if (fs.statSync(name).size == 0) {
+        fs.unlink(name, function(err) {
+          if (err)
+            console.log(err);
+        });
+      }
+    }
+
   });
 
   _bouncer.push({
@@ -79,35 +120,10 @@ var _break = function(fileName, count) {
 
 var _join = function(targetRoot) {
 
-  var randomAccessFile = require('random-access-file'),
-    _ = require('lodash');
-
-  var _getFileCount = function(targetRoot) {
-
-    var memo;
-
-    var getCount = function() {
-
-      if (memo)
-        return memo;
-
-      var files = fs.readdirSync(path.dirname(targetRoot));
-
-      files = _.filter(files, function(file) {
-        return file.indexOf(path.basename(targetRoot) + '.') != -1;
-      });
-
-      memo = files.length || 0;
-
-      return memo;
-
-    };
-
-    return getCount;
-  }
+  var randomAccessFile = require('random-access-file');
 
   var getCount = _getFileCount(targetRoot),
-    outputFile = createPath(_checkForOut(targetRoot), targetRoot);
+    outputFile = createPath(_getOutputPath(targetRoot), targetRoot);
 
   if (fs.existsSync(outputFile)) {
     console.log(outputFile + ' already exists on disk : (');
