@@ -120,7 +120,7 @@ var _join = function(targetRoot) {
 
     if (!fs.existsSync(name)) {
       console.log(name + ' missing :/');
-      continue
+      continue;
     }
 
     _bouncer.push({

@@ -1,6 +1,6 @@
 {
   "name": "file-smasher",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "smash a file into pieces and put it back together",
   "main": "smash.min.js",
   "scripts": {
